@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # TAMER
 TAMER (Training an Agent Manually via Evaluative Reinforcement) is a framework for human-in-the-loop Reinforcement Learning, proposed by [Knox + Stone](http://www.cs.utexas.edu/~sniekum/classes/RLFD-F16/papers/Knox09.pdf) in 2009. 
 
@@ -17,3 +18,7 @@ In training, watch the agent play and press 'W' to give a positive reward and 'A
 =======
 # miniprojet
 >>>>>>> edf7beea96b4bf776c99ad33f37e434bd746ebed
+=======
+# miniprojet
+“essai”
+>>>>>>> 92f168ea8c3b988a859b9137134029f123705d16
