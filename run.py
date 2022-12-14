@@ -25,7 +25,7 @@ async def main():
     # the more time per step, the easier for the human
     # but the longer it takes to train (in real time)
     # 0.2 seconds is fast but doable
-    tamer_training_timestep = 1
+    tamer_training_timestep = 0.3
     agent = Tamer(env, num_episodes, discount_factor, epsilon, min_eps, tame,
                   tamer_training_timestep, model_file_to_load=None)
     #model = "./tamer/saved_models/MountainCar-v0_local_model_1543395776.18.h5"

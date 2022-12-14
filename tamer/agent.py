@@ -159,12 +159,15 @@ class Tamer:
 
                 # Determine next action
                 if mode == 3 : #instruction
+                    action = 3 #action =3 on n'a pas instruction de humain
                     now = time.time()
                     while time.time() < now + self.ts_len:
                         frame = None
                         time.sleep(0.01)  # save the CPU
-                        action = disp.get_instruction()
-                        is_instruction = 1
+                        instruction = disp.get_instruction()
+                        if instruction != 3 :
+                            action = instruction
+                            is_instruction = 1
                     if action == 3 :
                         action = self.act(state)
                         is_instruction = 0
@@ -270,9 +273,16 @@ class Tamer:
                     ecart_log.append(ecart_temps)
         elif mode == 0 or mode == 3:
             for i in range(self.num_episodes):
-                reward_temps, ecart_temps = self._train_episode(i, disp,mode)
-                reward_log.append(reward_temps)
-                ecart_log.append(ecart_temps)
+                print('entrer yes pour ajouter feedback no non feedback')
+                feedback = input()
+                if feedback == 'yes':
+                    reward_temps, ecart_temps = self._train_episode(i, disp,mode)
+                    reward_log.append(reward_temps)
+                    ecart_log.append(ecart_temps)
+                else:
+                    reward_temps, ecart_temps = self._train_episode(i, disp,mode=0)
+                    reward_log.append(reward_temps)
+                    ecart_log.append(ecart_temps)
         else:
             for i in range(self.num_episodes):
                 print('entrer yes pour ajouter feedback no non feedback')
