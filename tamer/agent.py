@@ -132,8 +132,7 @@ class Tamer:
         print(f'Episode: {episode_index + 1}  Timestep:', end='')
         if len(cap)>0 and mode == 1:
             cap = cap [0]
-            print('enrigister')
-        elif len(cap)>0 and mode == 2:
+        if len(cap)>0 and mode == 2:
             mic = cap [0]
         if mode == 1 :
                 mpHands = mp.solutions.hands  #methode utilisee
@@ -155,11 +154,12 @@ class Tamer:
             dict_writer.writeheader()
             for ts in count():
                 print(f' {ts}', end='')
-                self.env.render()
+                if self.tame:
+                    self.env.render()
 
                 # Determine next action
                 action = self.act(state)
-                print('action',MOUNTAINCAR_ACTION_MAP[action])
+                #print('action',MOUNTAINCAR_ACTION_MAP[action])
                 if self.tame:
                     disp.show_action(action)
 
@@ -188,7 +188,7 @@ class Tamer:
                             human_reward = disp.get_parole_feedback(r,mic)
                         feedback_ts = dt.datetime.now().time()
                         if human_reward != 0:
-                            print('humain reward',human_reward)
+                            #print('humain reward',human_reward)
                             dict_writer.writerow(
                                 {
                                     'Episode': episode_index + 1,
@@ -212,6 +212,17 @@ class Tamer:
         # Decay epsilon
         if self.epsilon > self.min_eps:
             self.epsilon -= self.epsilon_step
+        if not self.tame:
+            if episode_index %200 == 0:
+                self.play(n_episodes=1, render=True)
+
+                return self.evaluate(n_episodes=30)
+            else :
+                return -200
+        else:
+            self.play(n_episodes=1, render=True)
+
+            return self.evaluate(n_episodes=30)
 
     async def train(self, mode,model_file_to_save=None):
         """
@@ -220,6 +231,7 @@ class Tamer:
             model_file_to_save: save Q or H model to this filename
         """
         # render first so that pygame display shows up on top
+        reward_log = []
         self.env.render()
         disp = None
         if self.tame:
@@ -229,16 +241,22 @@ class Tamer:
         
         if mode ==1:
             cap = cv2.VideoCapture(0) # use the default camera as the audio source
-            print('cap')
         if mode ==2:
             cap = sr.Microphone() # use the default microphone as the audio source
-        for i in range(self.num_episodes):
-            self._train_episode(i, disp,mode,cap)
+        if mode == 0:
+            for i in range(self.num_episodes):
+                reward_temps = self._train_episode(i, disp,mode)
+                if i%200 == 0:
+                    reward_log.append(reward_temps)
+        else:
+            for i in range(self.num_episodes):
+                reward_log.append(self._train_episode(i, disp,mode,cap))
 
         print('\nCleaning up...')
         self.env.close()
         if model_file_to_save is not None:
             self.save_model(filename=model_file_to_save)
+        print(reward_log)
 
     def play(self, n_episodes=1, render=False):
         """

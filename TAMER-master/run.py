@@ -18,7 +18,7 @@ async def main():
     min_eps = 0
     num_episodes = 3
     tame = True  # set to false for vanilla Q learning
-    mode = 2 #mode0: clavier, mode1: gest, mode2: parole
+    mode = 0 #mode0: clavier, mode1: gest, mode2: parole
     # set a timestep for training TAMER
     # the more time per step, the easier for the human
     # but the longer it takes to train (in real time)
