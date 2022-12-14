@@ -128,11 +128,11 @@ class Tamer:
         else:
             return np.random.randint(0, self.env.action_space.n)
 
-    def _train_episode(self, episode_index, disp,mode,*cap):
+    def _train_episode(self, episode_index, disp,mode,*cap): #,is_expert,model_expert
         print(f'Episode: {episode_index + 1}  Timestep:', end='')
         if len(cap)>0 and mode == 1:
             cap = cap [0]
-        if len(cap)>0 and mode == 2:
+        elif len(cap)>0 and mode == 2:
             mic = cap [0]
         if mode == 1 :
                 mpHands = mp.solutions.hands  #methode utilisee
@@ -158,7 +158,21 @@ class Tamer:
                     self.env.render()
 
                 # Determine next action
-                action = self.act(state)
+                if mode == 3 : #instruction
+                    now = time.time()
+                    while time.time() < now + self.ts_len:
+                        frame = None
+                        time.sleep(0.01)  # save the CPU
+                        action = disp.get_instruction()
+                        is_instruction = 1
+                    if action == 3 :
+                        action = self.act(state)
+                        is_instruction = 0
+                else:
+                    action = self.act(state)
+                print('instruction=',is_instruction)
+                #state_temps = np.reshape(state, [-1, self.env.observation_space.shape[0]])
+                #action_expert = model_expert.predict(state_temps)
                 #print('action',MOUNTAINCAR_ACTION_MAP[action])
                 if self.tame:
                     disp.show_action(action)
@@ -173,6 +187,8 @@ class Tamer:
                             self.Q.predict(next_state)
                         )
                     self.Q.update(state, action, td_target)
+                elif mode == 3:
+                    self.H.update(state, action, is_instruction)
                 else:
                     now = time.time()
                     while time.time() < now + self.ts_len:
@@ -224,7 +240,7 @@ class Tamer:
 
             return self.evaluate(n_episodes=30)
 
-    async def train(self, mode,model_file_to_save=None):
+    async def train(self, mode,model_file_to_save=None):#model_expert,is_expert
         """
         TAMER (or Q learning) training loop
         Args:
@@ -232,8 +248,10 @@ class Tamer:
         """
         # render first so that pygame display shows up on top
         reward_log = []
+        ecart_log = []
         self.env.render()
         disp = None
+        feedback = 'yes' #yes ajoute feedback humain no non feedback humain
         if self.tame:
             # only init pygame display if we're actually training tamer
             from tamer.interface import Interface
@@ -241,16 +259,33 @@ class Tamer:
         
         if mode ==1:
             cap = cv2.VideoCapture(0) # use the default camera as the audio source
-        if mode ==2:
+        elif mode ==2:
             cap = sr.Microphone() # use the default microphone as the audio source
-        if mode == 0:
+
+        if not self.tame:
             for i in range(self.num_episodes):
-                reward_temps = self._train_episode(i, disp,mode)
+                reward_temps, ecart_temps = self._train_episode(i, disp,mode)
                 if i%200 == 0:
                     reward_log.append(reward_temps)
+                    ecart_log.append(ecart_temps)
+        elif mode == 0 or mode == 3:
+            for i in range(self.num_episodes):
+                reward_temps, ecart_temps = self._train_episode(i, disp,mode)
+                reward_log.append(reward_temps)
+                ecart_log.append(ecart_temps)
         else:
             for i in range(self.num_episodes):
-                reward_log.append(self._train_episode(i, disp,mode,cap))
+                print('entrer yes pour ajouter feedback no non feedback')
+                feedback = input()
+                if feedback == 'yes':
+                    reward_temps, ecart_temps = self._train_episode(i, disp,mode,cap)
+                    reward_log.append(reward_temps)
+                    ecart_log.append(ecart_temps)
+                else:
+                    reward_temps, ecart_temps = self._train_episode(i, disp,mode=0)
+                    reward_log.append(reward_temps)
+                    ecart_log.append(ecart_temps)
+                    
 
         print('\nCleaning up...')
         self.env.close()
@@ -289,11 +324,13 @@ class Tamer:
         print('Evaluating agent')
         rewards = self.play(n_episodes=n_episodes)
         avg_reward = np.mean(rewards)
+        ecart_type = np.var(rewards)
         print(
             f'Average total episode reward over {n_episodes} '
             f'episodes: {avg_reward:.2f}'
         )
-        return avg_reward
+        print( 'ecart type reward : ',ecart_type)
+        return avg_reward,ecart_type
 
     def save_model(self, filename):
         """

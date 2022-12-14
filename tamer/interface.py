@@ -58,7 +58,7 @@ class Interface:
 
     def get_parole_feedback(self,r,mic):
         """
-        Get human input. 'yes' key for positive, 'no' key for negative.
+        Get human input. 'yes' for positive, 'no' for negative.
         Returns: scalar reward (1 for positive, -1 for negative)
         """
         reward = 0
@@ -76,6 +76,24 @@ class Interface:
             reward = -1
         pygame.display.update(area)
         return reward
+
+    def get_instruction(self):
+        """
+        Get human input. 'l' key --0 for left, 'r' --2 key for right, 's'--1 key for stop.
+        """
+        instruction = 3
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_l:
+                    instruction = 0
+                    break
+                elif event.key == pygame.K_r:
+                    instruction = 2
+                    break
+                elif event.key == pygame.K_s:
+                    instruction = 1
+                    break
+        return instruction
 
     def show_action(self, action):
         """
