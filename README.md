@@ -15,7 +15,18 @@ python3 -m pip install -r requirements.txt
 
 Use run.py. You can fiddle with the config in the script.
 
-In training, watch the agent play and press 'W' to give a positive reward and 'A' to give a negative. The agent's current action is displayed.
+We offer four different modes, which you can modify in the run.py 
+
+mode0: clavier, mode1: gest, mode2: parole, mode3: instruction
+
+In training mode 0, watch the agent play and press 'W' to give a positive reward and 'A' to give a negative. The agent's current action is displayed.
+
+In training mode 1, watch the agent play and show a gesture near the thumb and index finger to give a positive reward and a gesture away from the thumb and index finger to give a negative. The agent's current action is displayed.
+
+
+In training mode 2, watch the agent play and say 'yes' to give a positive reward and say 'no' to give a negative. The agent's current action is displayed.
+
+In training mode 3, watch the agent and give instructions on what to do next. press 'r' go right, press 'l' go left, press 's' stop.
 
 ![Screenshot of TAMER](screenshot.png)
 
