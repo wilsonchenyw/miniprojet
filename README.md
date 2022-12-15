@@ -10,6 +10,7 @@ This is an implementation of a TAMER agent, converted from a standard Q-learning
 You need python 3.7+ with numpy, sklearn, pygame and gym.
 
 Install the packages and libraries by running the following lines:
+
 python3 -m pip install -r requirements.txt
 
 Use run.py. You can fiddle with the config in the script.
