@@ -158,7 +158,7 @@ class Tamer:
                     self.env.render()
 
                 # Determine next action
-                if mode == 3 : #instruction
+                if mode == 3 and self.tame: #instruction
                     action = 3 #action =3 on n'a pas instruction de humain
                     now = time.time()
                     while time.time() < now + self.ts_len:
@@ -173,7 +173,7 @@ class Tamer:
                         is_instruction = 0
                 else:
                     action = self.act(state)
-                print('instruction=',is_instruction)
+                #print('instruction=',is_instruction)
                 #state_temps = np.reshape(state, [-1, self.env.observation_space.shape[0]])
                 #action_expert = model_expert.predict(state_temps)
                 #print('action',MOUNTAINCAR_ACTION_MAP[action])
@@ -190,9 +190,12 @@ class Tamer:
                             self.Q.predict(next_state)
                         )
                     self.Q.update(state, action, td_target)
-                elif mode == 3:
+                elif mode == 3 and is_instruction:
+                    self.H.update(state, 0, 0)
+                    self.H.update(state, 1, 0)
+                    self.H.update(state, 2, 0)
                     self.H.update(state, action, is_instruction)
-                else:
+                elif mode !=3 :
                     now = time.time()
                     while time.time() < now + self.ts_len:
                         
@@ -206,7 +209,7 @@ class Tamer:
                         elif mode == 2:
                             human_reward = disp.get_parole_feedback(r,mic)
                         feedback_ts = dt.datetime.now().time()
-                        if human_reward != 0:
+                        if human_reward != 0 and mode !=3:
                             #print('humain reward',human_reward)
                             dict_writer.writerow(
                                 {
@@ -231,17 +234,9 @@ class Tamer:
         # Decay epsilon
         if self.epsilon > self.min_eps:
             self.epsilon -= self.epsilon_step
-        if not self.tame:
-            if episode_index %200 == 0:
-                self.play(n_episodes=1, render=True)
-
-                return self.evaluate(n_episodes=30)
-            else :
-                return -200
-        else:
-            self.play(n_episodes=1, render=True)
-
-            return self.evaluate(n_episodes=30)
+ 
+        self.play(n_episodes=1, render=True)
+        return self.evaluate(n_episodes=30)
 
     async def train(self, mode,model_file_to_save=None):#model_expert,is_expert
         """
@@ -252,6 +247,8 @@ class Tamer:
         # render first so that pygame display shows up on top
         reward_log = []
         ecart_log = []
+        q25_log =[]
+        q75_log = []
         self.env.render()
         disp = None
         feedback = 'yes' #yes ajoute feedback humain no non feedback humain
@@ -267,41 +264,59 @@ class Tamer:
 
         if not self.tame:
             for i in range(self.num_episodes):
-                reward_temps, ecart_temps = self._train_episode(i, disp,mode)
-                if i%200 == 0:
-                    reward_log.append(reward_temps)
-                    ecart_log.append(ecart_temps)
+                reward_temps,q25_rewards,q75_rewards, ecart_temps  = self._train_episode(i, disp,mode)
+                reward_log.append(reward_temps)
+                ecart_log.append(ecart_temps)
+                q25_log.append(q25_rewards)
+                q75_log.append(q75_rewards)
         elif mode == 0 or mode == 3:
             for i in range(self.num_episodes):
                 print('entrer yes pour ajouter feedback no non feedback')
                 feedback = input()
                 if feedback == 'yes':
-                    reward_temps, ecart_temps = self._train_episode(i, disp,mode)
+                    time.sleep(5)
+                    self.ts_len = 0.3
+                    reward_temps,q25_rewards,q75_rewards, ecart_temps = self._train_episode(i, disp,mode)
                     reward_log.append(reward_temps)
                     ecart_log.append(ecart_temps)
+                    q25_log.append(q25_rewards)
+                    q75_log.append(q75_rewards)
                 else:
-                    reward_temps, ecart_temps = self._train_episode(i, disp,mode=0)
+                    self.ts_len = 0.02
+                    reward_temps,q25_rewards,q75_rewards, ecart_temps = self._train_episode(i, disp,mode=0)
                     reward_log.append(reward_temps)
                     ecart_log.append(ecart_temps)
+                    q25_log.append(q25_rewards)
+                    q75_log.append(q75_rewards)
         else:
             for i in range(self.num_episodes):
                 print('entrer yes pour ajouter feedback no non feedback')
                 feedback = input()
                 if feedback == 'yes':
-                    reward_temps, ecart_temps = self._train_episode(i, disp,mode,cap)
+                    time.sleep(5)
+                    self.ts_len = 0.3
+                    reward_temps,q25_rewards,q75_rewards, ecart_temps = self._train_episode(i, disp,mode,cap)
                     reward_log.append(reward_temps)
                     ecart_log.append(ecart_temps)
+                    q25_log.append(q25_rewards)
+                    q75_log.append(q75_rewards)
                 else:
-                    reward_temps, ecart_temps = self._train_episode(i, disp,mode=0)
+                    self.ts_len = 0.02
+                    reward_temps,q25_rewards,q75_rewards, ecart_temps = self._train_episode(i, disp,mode=0)
                     reward_log.append(reward_temps)
                     ecart_log.append(ecart_temps)
+                    q25_log.append(q25_rewards)
+                    q75_log.append(q75_rewards)
                     
 
         print('\nCleaning up...')
         self.env.close()
         if model_file_to_save is not None:
             self.save_model(filename=model_file_to_save)
-        print(reward_log)
+        print('reward_log',reward_log)
+        print('q25_rewards',q25_log)
+        print('q75_rewards',q75_log)
+        print('ecart_log',ecart_log)
 
     def play(self, n_episodes=1, render=False):
         """
@@ -335,12 +350,14 @@ class Tamer:
         rewards = self.play(n_episodes=n_episodes)
         avg_reward = np.mean(rewards)
         ecart_type = np.var(rewards)
+        q25_rewards=np.quantile(rewards, 0.25)
+        q75_rewards=np.quantile(rewards, 0.75) 
         print(
             f'Average total episode reward over {n_episodes} '
             f'episodes: {avg_reward:.2f}'
         )
-        print( 'ecart type reward : ',ecart_type)
-        return avg_reward,ecart_type
+        print( 'ecart typen : ',ecart_type)
+        return avg_reward,q25_rewards,q75_rewards,ecart_type
 
     def save_model(self, filename):
         """

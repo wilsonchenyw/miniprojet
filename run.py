@@ -17,8 +17,8 @@ async def main():
     discount_factor = 0.9
     epsilon = 0.8  # vanilla Q learning actually works well with no random exploration
     min_eps = 0.02
-    num_episodes = 50
-    tame = True  # set to false for vanilla Q `learning
+    num_episodes = 30
+    tame = False  # set to false for vanilla Q `learning
     #is_expert = True
     mode = 3 #mode0: clavier, mode1: gest, mode2: parole, mode3: instruction
     # set a timestep for training TAMER
@@ -32,7 +32,7 @@ async def main():
     #model_expert = tf.keras.models.load_model(model)
     await agent.train(mode, model_file_to_save='autosave')#,is_expert=is_expert,model_expert=model_expert
     print('finish')
-    agent.play(n_episodes=10, render=True)
+    agent.play(n_episodes=1, render=True)
     agent.evaluate(n_episodes=20)
 
 
