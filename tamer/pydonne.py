@@ -20,9 +20,9 @@ q25_avg3 = [-200.0, -125.75, -116.75, -117.75, -112.0, -113.75, -112.0, -114.0, 
 q75_avg3 = [-122.0, -116.0, -114.0, -112.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0, -111.0]
 x = range(1,31)
 plt.plot(x, ecart2,'c*-', color='r',label='TAMER-clavier',linewidth=1)
-plt.plot(x, ecart1,'m.-.',color='g',label='Q-learning',linewidth=1)
-#plt.plot(x, reward4,'s-',color='y',label='Instrcution',linewidth=1)
-#plt.plot(x, reward1,'p-.',color='g',label='Q-learning',linewidth=1)
+plt.plot(x, ecart3,'m.-.',color='b',label='TAMER-geste',linewidth=1)
+plt.plot(x, ecart4,'s-',color='y',label='Instrcution',linewidth=1)
+plt.plot(x, ecart1,'p-.',color='g',label='Q-learning',linewidth=1)
 #plt.fill_between(x, q25_avg1, q75_avg1,color='b',alpha=0.25, linewidth=0)
 #plt.fill_between(x, q25_avg2, q75_avg2,color='r', alpha=0.25, linewidth=0)
 #plt.fill_between(x, q25_avg3, q75_avg3,color='y', alpha=0.25, linewidth=0)
